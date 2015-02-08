@@ -22,9 +22,9 @@ from pyquery import PyQuery as pq
 import requests
 from setproctitle import setproctitle
 import yaml
+import datetime
 
-
-log.basicConfig(level='INFO')
+log.basicConfig(level='DEBUG')
 
 CFG = yaml.load(open('cfg.yml', 'r'))
 TEMPLATE = u"""\
@@ -78,8 +78,10 @@ def send(to, subject, body, attachments=()):
         part.add_header('Content-Disposition', 'attachment; filename="%s"' % fn)
         msg.attach(part)
 
-    server = smtplib.SMTP()
-    server.connect(CFG['smtp']['host'], CFG['smtp']['port'])
+
+    server = smtplib.SMTP(CFG['smtp']['host'], CFG['smtp']['port'])
+    server.ehlo()
+    server.starttls()
     server.login(CFG['smtp']['user'], CFG['smtp']['pass'])
     server.sendmail(author, (to,), msg.as_string())
     server.quit()
@@ -127,7 +129,7 @@ def auth(user):
     access_token = parse_qs(r.text)['access_token'][0]
     return s, access_token
 
-def fetch(userid, s, access_token):
+def fetch(userid, s, access_token, since=None):
     data = {
         'consumer_key': CFG['api']['consumer'],
         'access_token': access_token,
@@ -136,6 +138,8 @@ def fetch(userid, s, access_token):
         'detailType': 'complete',
         'sort': 'oldest',
     }
+    if since is not None:
+        data['since'] = since
     sincepath = os.path.join('.since', userid)
     since = read(sincepath)
     if since: data['since'] = since
@@ -176,12 +180,17 @@ def run(user):
 
     while True:
         try:
+            # past 24h only. Just for testing
+            #since = int(datetime.datetime.now().strftime("%s")) - 86400
+            #response = fetch(userid, s, access_token,str(since))
             response = fetch(userid, s, access_token)
-        except requests.HTTPError:
+        except requests.HTTPError, e:
+            log.exception(e)
             time.sleep(30.0)
             continue
 
         for item_id in response['list']:
+            log.debug("Getting item: %s"%item_id)
             url = 'http://getpocket.com/a/read/%s' % item_id
             readbody = s.get(url).text
 
