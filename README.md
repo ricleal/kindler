@@ -6,6 +6,17 @@ Forked from [sunetos/kindler](https://github.com/sunetos/kindler).
 Just leave it running in your PC 24h a day...
 
 ## Notes
+
+I had to install before:
+```
+pip install pyyaml
+pip install setproctitle
+pip install requests
+pip install pyquery
+pip install humanize
+pip install gevent
+```
+
 Get it to work having an http server running:
 ```
 python -m SimpleHTTPServer
