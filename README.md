@@ -3,6 +3,8 @@ Python script for on-demand pushing from Pocket to Kindle.
 
 Forked from [sunetos/kindler](https://github.com/sunetos/kindler).
 
+Just leave it running in your PC 24h a day...
+
 ## Notes
 Get it to work having an http server running:
 ```
